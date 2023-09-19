@@ -14,7 +14,6 @@ public class Tetromino{
 	private int pieceWidth, pieceHeight;
 	private boolean[] pieceShape;
 	private Color pieceColor;
-	private int cx, cy;
 
 	public Tetromino(World world, int x, int y, Piece piece){
 		this.world = world;
@@ -23,8 +22,6 @@ public class Tetromino{
 		this.pieceColor = piece.getColor();
 		this.pieceWidth = piece.getWidth();
 		this.pieceHeight = piece.getHeight();
-		this.cx = piece.getCenterX();
-		this.cy = piece.getCenterY();
 		this.pieceShape = new boolean[piece.getShape().length];
 		System.arraycopy(piece.getShape(), 0, this.pieceShape, 0, this.pieceShape.length);
 	}
@@ -33,18 +30,90 @@ public class Tetromino{
 		return this.falling;
 	}
 
-	public int getY(){
-		return this.y;
+	public int getMinX(){
+		int minX = Integer.MAX_VALUE;
+		for (int y = 0; y < this.pieceHeight; y++){
+			int foundX = -1;
+			for (int x = 0; x < this.pieceWidth; x++){
+				boolean pos = this.pieceShape[x+this.pieceWidth*y];
+				if (pos){
+					foundX = x;
+					break;
+				}
+			}
+
+			if (foundX != -1 && foundX < minX){
+				minX = foundX;
+			}
+		}
+
+		return this.x+minX;
 	}
 
-	public int getPieceHeight(){
-		return this.pieceHeight;
+	public int getMaxX(){
+		int maxX = Integer.MIN_VALUE;
+		for (int y = 0; y < this.pieceHeight; y++){
+			int foundX = -1;
+			for (int x = this.pieceWidth-1; x >= 0; x--){
+				boolean pos = this.pieceShape[x+this.pieceWidth*y];
+				if (pos){
+					foundX = x;
+					break;
+				}
+			}
+
+			if (foundX != -1 && foundX > maxX){
+				maxX = foundX;
+			}
+		}
+
+		return this.x+maxX;
+	}
+
+	public int getMinY(){
+		int minY = Integer.MAX_VALUE;
+		for (int x = 0; x < this.pieceWidth; x++){
+			int foundY = -1;
+			for (int y = 0; y < this.pieceHeight; y++){
+				boolean pos = this.pieceShape[x+this.pieceWidth*y];
+				if (pos){
+					foundY = y;
+					break;
+				}
+			}
+
+			if (foundY != -1 && foundY < minY){
+				minY = foundY;
+			}
+		}
+
+		return this.y+minY;
+	}
+
+	public int getMaxY(){
+		int maxY = Integer.MIN_VALUE;
+		for (int x = 0; x < this.pieceWidth; x++){
+			int foundY = -1;
+			for (int y = this.pieceHeight-1; y >= 0; y--){
+				boolean pos = this.pieceShape[x+this.pieceWidth*y];
+				if (pos){
+					foundY = y;
+					break;
+				}
+			}
+
+			if (foundY != -1 && foundY > maxY){
+				maxY = foundY;
+			}
+		}
+
+		return this.y+maxY;
 	}
 
 	public void move(int n){
 		if (this.falling){
 			this.x += n;
-			if (this.x < 0 || this.x+this.pieceWidth > this.world.getWidth() || collided()){
+			if (getMinX() < 0 || getMaxX() > this.world.getWidth()-1 || collided()){
 				this.x -= n;
 			}
 		}
@@ -52,7 +121,8 @@ public class Tetromino{
 
 	public void partialFall(){
 		int space = -1;
-		for (int y = 0; y < this.pieceHeight; y++){
+		final int offset = getMinY()-this.y;
+		for (int y = offset; y < this.pieceHeight; y++){
 			boolean empty = true;
 			for (int x = 0; x < this.pieceWidth; x++){
 				if (this.pieceShape[x+this.pieceWidth*y]){
@@ -94,7 +164,7 @@ public class Tetromino{
 			this.falling = false;
 		}
 
-		if (this.y+this.pieceHeight >= this.world.getHeight()){
+		if (getMaxY() >= this.world.getHeight()-1){
 			this.falling = false;
 		}
 	}
@@ -103,14 +173,20 @@ public class Tetromino{
 		if (this.falling){
 			int w = this.pieceHeight;
 			int h = this.pieceWidth;
-			if (this.x+w >this.world.getWidth() || this.y+h >this.world.getHeight()){
-				return;
+
+			// Fix position
+			if (this.x+w > this.world.getWidth()){
+				this.x = this.world.getWidth()-w;
 			}
+			if (this.x < 0) this.x = 0;
+			if (this.y+h >this.world.getHeight()){
+				this.y = this.world.getHeight()-h;
+			}
+
 			boolean[] shape = new boolean[w*h];
-			int newX = 0;
 			int newY = 0;
 			for (int x = 0; x < this.pieceWidth; x++){
-				newX = 0;
+				int newX = 0;
 				for (int y = this.pieceHeight-1; y >= 0; y--){
 					shape[newX+w*newY] = this.pieceShape[x+this.pieceWidth*y];
 					newX++;
@@ -120,8 +196,6 @@ public class Tetromino{
 			this.pieceWidth = w;
 			this.pieceHeight = h;
 			this.pieceShape = shape;
-			//this.x += this.cx;
-			//this.y -= this.cy;
 		}
 	}
 

@@ -39,7 +39,7 @@ public class MainApplication extends Application{
 		Thread gameLoop = new Thread(() -> {
 			while (true){
 				try {
-					//this.world.update();
+					this.world.update();
 
 					// Create a tetromino
 					if (!this.fallingTetromino.isFalling()){
@@ -68,7 +68,7 @@ public class MainApplication extends Application{
 
 	private void createTetromino(){
 		Random random = new Random();
-		Piece p = Piece.SHAPE_L; //Piece.values()[random.nextInt(Piece.values().length)];
+		Piece p = Piece.values()[random.nextInt(Piece.values().length)];
 		Tetromino t = new Tetromino(this.world, this.world.getWidth()/2-p.getWidth()/2, 5, p);
 		this.fallingTetromino = t;
 		this.world.addTetromino(t);

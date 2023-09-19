@@ -59,8 +59,8 @@ public class World{
 				for (int i = 0; i < this.tetrominoes.size(); i++){
 					Tetromino t = this.tetrominoes.get(i);
 					t.removeRow(y);
-					if (t.getY() < y){
-						if (t.getY()+t.getPieceHeight() > y+1){
+					if (t.getMinY() < y){
+						if (t.getMaxY() > y+1){
 							t.partialFall();
 						} else {
 							t.fall();	
