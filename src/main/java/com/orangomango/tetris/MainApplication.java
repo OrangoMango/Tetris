@@ -9,6 +9,8 @@ import javafx.scene.paint.Color;
 import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.scene.input.KeyCode;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 
 import java.util.*;
 
@@ -21,6 +23,9 @@ public class MainApplication extends Application{
 	private Tetromino fallingTetromino;
 	private Map<KeyCode, Boolean> keys = new HashMap<>();
 	private volatile int fallTime;
+	private Piece nextPiece = null;
+
+	public static volatile int score;
 	
 	@Override
 	public void start(Stage stage){
@@ -33,7 +38,7 @@ public class MainApplication extends Application{
 		canvas.setOnKeyPressed(e -> this.keys.put(e.getCode(), true));
 		canvas.setOnKeyReleased(e -> this.keys.put(e.getCode(), false));
 
-		this.world = new World((WIDTH-10*Tetromino.SIZE)/2, (HEIGHT-20*Tetromino.SIZE)/2, 10, 20);
+		this.world = new World((WIDTH-10*Tetromino.SIZE)*0.7, (HEIGHT-20*Tetromino.SIZE)/2, 10, 20);
 		createTetromino();
 
 		Thread gameLoop = new Thread(() -> {
@@ -45,6 +50,10 @@ public class MainApplication extends Application{
 					if (!this.fallingTetromino.isFalling()){
 						this.world.checkLines();
 						createTetromino();
+					}
+
+					if (this.keys.getOrDefault(KeyCode.DOWN, false)){
+						score += 2;
 					}
 
 					Thread.sleep(this.keys.getOrDefault(KeyCode.DOWN, false) ? 100 : this.fallTime);
@@ -66,10 +75,27 @@ public class MainApplication extends Application{
 		stage.show();
 	}
 
+	private void gameOver(){
+		System.out.println("Game over");
+		this.world.getTetrominoes().clear();
+		this.fallingTetromino = null;
+		this.fallTime = 400;
+		this.nextPiece = null;
+		score = 0;
+		createTetromino();
+	}
+
 	private void createTetromino(){
 		Random random = new Random();
-		Piece p = Piece.values()[random.nextInt(Piece.values().length)];
-		Tetromino t = new Tetromino(this.world, this.world.getWidth()/2-p.getWidth()/2, 5, p);
+		Piece p = this.nextPiece == null ? Piece.values()[random.nextInt(Piece.values().length)] : this.nextPiece;
+		this.nextPiece = Piece.values()[random.nextInt(Piece.values().length)];
+		Tetromino t = new Tetromino(this.world, this.world.getWidth()/2-p.getWidth()/2, 0, p);
+
+		if (t.collided()){
+			gameOver();
+			return;
+		}
+
 		this.fallingTetromino = t;
 		this.world.addTetromino(t);
 		this.fallTime = 400;
@@ -77,7 +103,7 @@ public class MainApplication extends Application{
 	
 	private void update(GraphicsContext gc){
 		gc.clearRect(0, 0, WIDTH, HEIGHT);
-		gc.setFill(Color.BLACK);
+		gc.setFill(Color.web("#D5FDEB"));
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 
 		if (this.keys.getOrDefault(KeyCode.RIGHT, false)){
@@ -91,10 +117,23 @@ public class MainApplication extends Application{
 			this.keys.put(KeyCode.UP, false);
 		} else if (this.keys.getOrDefault(KeyCode.SPACE, false)){
 			this.fallTime = 0;
+			score += 50;
 			this.keys.put(KeyCode.SPACE, false);
 		}
 
 		this.world.render(gc);
+
+		gc.setFill(Color.BLACK);
+		gc.setFont(new Font("sans-serif", 20));
+		gc.setTextAlign(TextAlignment.CENTER);
+		gc.fillText("Score: "+score, WIDTH/2, 60);
+
+		gc.setStroke(Color.BLACK);
+		gc.setLineWidth(3);
+		gc.setFill(Color.BLACK);
+		gc.fillText("NEXT", 30+Tetromino.SIZE*2+10, 480);
+		gc.strokeRect(30, 490, Tetromino.SIZE*4+20, Tetromino.SIZE*4+20);
+		Tetromino.render(gc, this.nextPiece, 40, 500);
 	}
 	
 	public static void main(String[] args){

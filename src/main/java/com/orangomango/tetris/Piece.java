@@ -1,22 +1,22 @@
 package com.orangomango.tetris;
 
-import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 
 public enum Piece{
-	SHAPE_I(Color.CYAN, 4, 4, new boolean[]{false, true, false, false, false, true, false, false, false, true, false, false, false, true, false, false}),
-	SHAPE_L(Color.ORANGE, 3, 3, new boolean[]{false, true, false, false, true, false, false, true, true}),
-	SHAPE_L_FLIPPED(Color.BLUE, 3, 3, new boolean[]{false, true, false, false, true, false, true, true, false}),
-	SHAPE_SQUARE(Color.YELLOW, 2, 2, new boolean[]{true, true, true, true}),
-	SHAPE_T(Color.PURPLE, 3, 3, new boolean[]{false, false, false, true, true, true, false, true, false}),
-	SHAPE_Z(Color.RED, 3, 3, new boolean[]{false, false, false, true, true, false, false, true, true}),
-	SHAPE_Z_FLIPPED(Color.LIME, 3, 3, new boolean[]{false, false, false, false, true, true, true, true, false});
+	SHAPE_I("/block1.png", 4, 4, new boolean[]{false, true, false, false, false, true, false, false, false, true, false, false, false, true, false, false}),
+	SHAPE_L("/block2.png", 3, 3, new boolean[]{false, true, false, false, true, false, false, true, true}),
+	SHAPE_L_FLIPPED("/block3.png", 3, 3, new boolean[]{false, true, false, false, true, false, true, true, false}),
+	SHAPE_SQUARE("/block4.png", 2, 2, new boolean[]{true, true, true, true}),
+	SHAPE_T("/block5.png", 3, 3, new boolean[]{false, false, false, true, true, true, false, true, false}),
+	SHAPE_Z("/block6.png", 3, 3, new boolean[]{false, false, false, true, true, false, false, true, true}),
+	SHAPE_Z_FLIPPED("/block7.png", 3, 3, new boolean[]{false, false, false, false, true, true, true, true, false});
 
-	private Color color;
+	private Image image;
 	private int width, height;
 	private boolean[] shape;
 
-	private Piece(Color color, int w, int h, boolean[] shape){
-		this.color = color;
+	private Piece(String imageName, int w, int h, boolean[] shape){
+		this.image = new Image(getClass().getResourceAsStream(imageName));
 		this.width = w;
 		this.height = h;
 		this.shape = shape;
@@ -34,7 +34,7 @@ public enum Piece{
 		return this.shape;
 	}
 
-	public Color getColor(){
-		return this.color;
+	public Image getImage(){
+		return this.image;
 	}
 }

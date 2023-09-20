@@ -2,6 +2,7 @@ package com.orangomango.tetris;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 
 import java.util.*;
 
@@ -9,6 +10,7 @@ public class World{
 	private double x, y;
 	private int width, height;
 	private List<Tetromino> tetrominoes = new ArrayList<>();
+	private Image background = new Image(getClass().getResourceAsStream("/block8.png"));
 
 	public World(double x, double y, int w, int h){
 		this.x = x;
@@ -45,6 +47,7 @@ public class World{
 	}
 
 	public void checkLines(){
+		int rowsCleared = 0;
 		for (int y = 0; y < this.height; y++){
 			boolean completed = true;
 			for (int x = 0; x < this.width; x++){
@@ -60,14 +63,30 @@ public class World{
 					Tetromino t = this.tetrominoes.get(i);
 					t.removeRow(y);
 					if (t.getMinY() < y){
-						if (t.getMaxY() > y+1){
+						if (t.getMaxY() > y){
 							t.partialFall();
 						} else {
 							t.fall();	
 						}
 					}
 				}
+				rowsCleared++;
 			}
+		}
+
+		switch (rowsCleared){
+			case 1:
+				MainApplication.score += 100;
+				break;
+			case 2:
+				MainApplication.score += 300;
+				break;
+			case 3:
+				MainApplication.score += 500;
+				break;
+			case 4:
+				MainApplication.score += 800;
+				break;
 		}
 	}
 
@@ -79,16 +98,24 @@ public class World{
 	}
 
 	public void render(GraphicsContext gc){
-		gc.setStroke(Color.WHITE);
-		gc.setLineWidth(3);
-		gc.strokeRect(this.x-3, this.y-3, Tetromino.SIZE*this.width+3, Tetromino.SIZE*this.height+3);
-
 		gc.save();
 		gc.translate(this.x, this.y);
+
+		// Background
+		for (int x = 0; x < this.width; x++){
+			for (int y = 0; y < this.height; y++){
+				gc.drawImage(this.background, x*Tetromino.SIZE, y*Tetromino.SIZE, Tetromino.SIZE, Tetromino.SIZE);
+			}
+		}
+
 		for (int i = 0; i < this.tetrominoes.size(); i++){
 			Tetromino t = this.tetrominoes.get(i);
 			t.render(gc);
 		}
 		gc.restore();
+
+		gc.setStroke(Color.BLACK);
+		gc.setLineWidth(3);
+		gc.strokeRect(this.x, this.y, Tetromino.SIZE*this.width, Tetromino.SIZE*this.height);
 	}
 }

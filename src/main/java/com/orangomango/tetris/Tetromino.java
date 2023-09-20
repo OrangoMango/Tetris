@@ -1,7 +1,7 @@
 package com.orangomango.tetris;
 
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 
 import java.util.*;
 
@@ -13,13 +13,13 @@ public class Tetromino{
 	private boolean falling = true;
 	private int pieceWidth, pieceHeight;
 	private boolean[] pieceShape;
-	private Color pieceColor;
+	private Image pieceImage;
 
 	public Tetromino(World world, int x, int y, Piece piece){
 		this.world = world;
 		this.x = x;
 		this.y = y;
-		this.pieceColor = piece.getColor();
+		this.pieceImage = piece.getImage();
 		this.pieceWidth = piece.getWidth();
 		this.pieceHeight = piece.getHeight();
 		this.pieceShape = new boolean[piece.getShape().length];
@@ -144,7 +144,7 @@ public class Tetromino{
 			for (int y = 0; y < this.pieceHeight; y++){
 				for (int x = 0; x < this.pieceWidth; x++){
 					if (y < space){
-						shape[x+this.pieceWidth*(y+1)] = this.pieceShape[x+this.pieceWidth*y];
+						shape[x+this.pieceWidth*y] = this.pieceShape[x+this.pieceWidth*y];
 					} else if (y > space){
 						shape[x+this.pieceWidth*(y-1)] = this.pieceShape[x+this.pieceWidth*y];
 					}
@@ -193,9 +193,19 @@ public class Tetromino{
 				}
 				newY++;
 			}
+
+			int backupW = this.pieceWidth;
+			int backupH = this.pieceHeight;
+			boolean[] backupShape = this.pieceShape;
 			this.pieceWidth = w;
 			this.pieceHeight = h;
 			this.pieceShape = shape;
+
+			if (collided()){
+				this.pieceWidth = backupW;
+				this.pieceHeight = backupH;
+				this.pieceShape = backupShape;
+			}
 		}
 	}
 
@@ -205,7 +215,7 @@ public class Tetromino{
 		}
 	}
 
-	private boolean collided(){
+	public boolean collided(){
 		List<Tetromino> tetrominoes = this.world.getTetrominoes();
 		for (int i = 0; i < tetrominoes.size(); i++){
 			Tetromino t = tetrominoes.get(i);
@@ -249,8 +259,18 @@ public class Tetromino{
 			for (int y = 0; y < this.pieceHeight; y++){
 				boolean show = this.pieceShape[x+this.pieceWidth*y];
 				if (show){
-					gc.setFill(this.pieceColor);
-					gc.fillRect((this.x+x)*SIZE, (this.y+y)*SIZE, SIZE, SIZE);
+					gc.drawImage(this.pieceImage, (this.x+x)*SIZE, (this.y+y)*SIZE, SIZE, SIZE);
+				}
+			}
+		}
+	}
+
+	public static void render(GraphicsContext gc, Piece piece, double px, double py){
+		for (int x = 0; x < piece.getWidth(); x++){
+			for (int y = 0; y < piece.getHeight(); y++){
+				boolean show = piece.getShape()[x+piece.getWidth()*y];
+				if (show){
+					gc.drawImage(piece.getImage(), px+x*SIZE, py+y*SIZE, SIZE, SIZE);
 				}
 			}
 		}
