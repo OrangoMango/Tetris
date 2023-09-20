@@ -23,6 +23,14 @@ public class World{
 		return this.tetrominoes;
 	}
 
+	public double getX(){
+		return this.x;
+	}
+
+	public double getY(){
+		return this.y;
+	}
+
 	public int getWidth(){
 		return this.width;
 	}

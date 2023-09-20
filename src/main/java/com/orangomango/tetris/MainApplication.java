@@ -30,7 +30,7 @@ public class MainApplication extends Application{
 	public static volatile int score, highscore;
 	public static Map<String, AudioClip> audio = new HashMap<>();
 	private static Media BACKGROUND_MUSIC;
-	private static Font MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), 22);
+	private static Font MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), 25);
 	
 	@Override
 	public void start(Stage stage){
@@ -86,6 +86,21 @@ public class MainApplication extends Application{
 		stage.setResizable(false);
 		stage.setScene(new Scene(pane, WIDTH, HEIGHT));
 		stage.show();
+	}
+
+	private Tetromino createTempTetromino(){
+		Tetromino temp = new Tetromino(this.world, 0, 0, this.fallingTetromino.getPiece());
+		temp.setParent(this.fallingTetromino);
+		for (int i = 0; i < this.fallingTetromino.getRotation(); i++){
+			temp.rotate();
+		}
+		temp.setX(this.fallingTetromino.getX());
+		temp.setY(this.fallingTetromino.getY());
+		while (temp.isFalling()){
+			temp.fall();
+		}
+
+		return temp;
 	}
 
 	private void saveHighscore(){
@@ -167,16 +182,27 @@ public class MainApplication extends Application{
 			this.fallingTetromino.move(-1);
 			this.keys.put(KeyCode.LEFT, false);
 		} else if (this.keys.getOrDefault(KeyCode.UP, false)){
+			MainApplication.audio.get("rotate.wav").play();
 			this.fallingTetromino.rotate();
 			this.keys.put(KeyCode.UP, false);
 		} else if (this.keys.getOrDefault(KeyCode.SPACE, false)){
-			this.fallTime = 0;
 			MainApplication.audio.get("falling.wav").play();
+			Tetromino shadow = createTempTetromino();
+			this.fallingTetromino.setX(shadow.getX());
+			this.fallingTetromino.setY(shadow.getY());
+			this.fallingTetromino.stop();
 			score += 50;
 			this.keys.put(KeyCode.SPACE, false);
 		}
 
 		this.world.render(gc);
+
+		if (this.fallingTetromino.isFalling()){
+			gc.save();
+			gc.translate(this.world.getX(), this.world.getY());
+			createTempTetromino().render(gc);
+			gc.restore();
+		}
 
 		gc.setFill(Color.BLACK);
 		gc.setFont(MAIN_FONT);

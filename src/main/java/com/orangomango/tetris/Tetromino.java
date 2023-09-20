@@ -13,21 +13,27 @@ public class Tetromino{
 	private boolean falling = true;
 	private int pieceWidth, pieceHeight;
 	private boolean[] pieceShape;
-	private Image pieceImage;
+	private Piece piece;
+	private Tetromino parent;
+	private int rotation;
 
 	public Tetromino(World world, int x, int y, Piece piece){
 		this.world = world;
 		this.x = x;
 		this.y = y;
-		this.pieceImage = piece.getImage();
-		this.pieceWidth = piece.getWidth();
-		this.pieceHeight = piece.getHeight();
-		this.pieceShape = new boolean[piece.getShape().length];
+		this.piece = piece;
+		this.pieceWidth = this.piece.getWidth();
+		this.pieceHeight = this.piece.getHeight();
+		this.pieceShape = new boolean[this.piece.getShape().length];
 		System.arraycopy(piece.getShape(), 0, this.pieceShape, 0, this.pieceShape.length);
 	}
 
 	public boolean isFalling(){
 		return this.falling;
+	}
+
+	public void setParent(Tetromino t){
+		this.parent = t;
 	}
 
 	public int getMinX(){
@@ -108,6 +114,30 @@ public class Tetromino{
 		}
 
 		return this.y+maxY;
+	}
+
+	public int getX(){
+		return this.x;
+	}
+
+	public int getY(){
+		return this.y;
+	}
+
+	public void setX(int v){
+		this.x = v;
+	}
+
+	public void setY(int v){
+		this.y = v;
+	}
+
+	public Piece getPiece(){
+		return this.piece;
+	}
+
+	public int getRotation(){
+		return this.rotation;
 	}
 
 	public void move(int n){
@@ -208,7 +238,7 @@ public class Tetromino{
 				this.pieceShape = backupShape;
 			}
 
-			MainApplication.audio.get("rotate.wav").play();
+			this.rotation = (this.rotation+1)%4;
 		}
 	}
 
@@ -222,7 +252,7 @@ public class Tetromino{
 		List<Tetromino> tetrominoes = this.world.getTetrominoes();
 		for (int i = 0; i < tetrominoes.size(); i++){
 			Tetromino t = tetrominoes.get(i);
-			if (t != this){
+			if (t != this && t != this.parent){
 				for (int x = 0; x < this.pieceWidth; x++){
 					for (int y = 0; y < this.pieceHeight; y++){
 						boolean thisSquare = this.getAbsoluteFromShape(this.x+x, this.y+y);
@@ -258,14 +288,16 @@ public class Tetromino{
 	}
 
 	public void render(GraphicsContext gc){
+		if (this.parent != null) gc.setGlobalAlpha(0.5);
 		for (int x = 0; x < this.pieceWidth; x++){
 			for (int y = 0; y < this.pieceHeight; y++){
 				boolean show = this.pieceShape[x+this.pieceWidth*y];
 				if (show){
-					gc.drawImage(this.pieceImage, (this.x+x)*SIZE, (this.y+y)*SIZE, SIZE, SIZE);
+					gc.drawImage(this.piece.getImage(), (this.x+x)*SIZE, (this.y+y)*SIZE, SIZE, SIZE);
 				}
 			}
 		}
+		gc.setGlobalAlpha(1);
 	}
 
 	public static void render(GraphicsContext gc, Piece piece, double px, double py){
