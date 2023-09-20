@@ -288,7 +288,7 @@ public class Tetromino{
 	}
 
 	public void render(GraphicsContext gc){
-		if (this.parent != null) gc.setGlobalAlpha(0.5);
+		if (this.parent != null) gc.setGlobalAlpha(0.4);
 		for (int x = 0; x < this.pieceWidth; x++){
 			for (int y = 0; y < this.pieceHeight; y++){
 				boolean show = this.pieceShape[x+this.pieceWidth*y];

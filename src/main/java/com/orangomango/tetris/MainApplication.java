@@ -27,10 +27,11 @@ public class MainApplication extends Application{
 	private volatile int fallTime;
 	private Piece nextPiece = null;
 
-	public static volatile int score, highscore;
+	public static volatile int score, highscore, difficulty = 5;
 	public static Map<String, AudioClip> audio = new HashMap<>();
 	private static Media BACKGROUND_MUSIC;
 	private static Font MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), 25);
+	private static int FALLING_SPEED = getSpeed();
 	
 	@Override
 	public void start(Stage stage){
@@ -69,7 +70,7 @@ public class MainApplication extends Application{
 						MainApplication.audio.get("move.wav").play();
 					}
 
-					Thread.sleep(this.keys.getOrDefault(KeyCode.DOWN, false) ? 100 : this.fallTime);
+					Thread.sleep(this.keys.getOrDefault(KeyCode.DOWN, false) ? FALLING_SPEED/4 : this.fallTime);
 				} catch (InterruptedException ex){
 					ex.printStackTrace();
 				}
@@ -144,7 +145,7 @@ public class MainApplication extends Application{
 		MainApplication.audio.get("gameover.wav").play();
 		this.world.getTetrominoes().clear();
 		this.fallingTetromino = null;
-		this.fallTime = 400;
+		this.fallTime = FALLING_SPEED;
 		this.nextPiece = null;
 		if (score > highscore){
 			highscore = score;
@@ -167,7 +168,14 @@ public class MainApplication extends Application{
 
 		this.fallingTetromino = t;
 		this.world.addTetromino(t);
-		this.fallTime = 400;
+		this.fallTime = FALLING_SPEED;
+	}
+
+	private static int getSpeed(){
+		// 100 - 1200, 5
+		double t = difficulty/9.0;
+		int speed = (int)Math.round((1-t)*1100+100);
+		return speed;
 	}
 	
 	private void update(GraphicsContext gc){
@@ -186,13 +194,68 @@ public class MainApplication extends Application{
 			this.fallingTetromino.rotate();
 			this.keys.put(KeyCode.UP, false);
 		} else if (this.keys.getOrDefault(KeyCode.SPACE, false)){
-			MainApplication.audio.get("falling.wav").play();
-			Tetromino shadow = createTempTetromino();
-			this.fallingTetromino.setX(shadow.getX());
-			this.fallingTetromino.setY(shadow.getY());
-			this.fallingTetromino.stop();
-			score += 50;
-			this.keys.put(KeyCode.SPACE, false);
+			if (this.fallingTetromino.isFalling()){
+				MainApplication.audio.get("falling.wav").play();
+				Tetromino shadow = createTempTetromino();
+				score += (shadow.getMinY()-this.fallingTetromino.getMaxY()-1)*10;
+				this.fallingTetromino.stop();
+				this.fallingTetromino.setX(shadow.getX());
+				this.fallingTetromino.setY(shadow.getY());
+				this.keys.put(KeyCode.SPACE, false);
+			}
+		}
+
+		// Difficulty
+		if (this.keys.getOrDefault(KeyCode.DIGIT1, false)){
+			difficulty = 1;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT1, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT2, false)){
+			difficulty = 2;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT2, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT3, false)){
+			difficulty = 3;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT3, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT4, false)){
+			difficulty = 4;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT4, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT5, false)){
+			difficulty = 5;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT5, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT6, false)){
+			difficulty = 6;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT6, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT7, false)){
+			difficulty = 7;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT7, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT8, false)){
+			difficulty = 8;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT8, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT9, false)){
+			difficulty = 9;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT9, false);
+		} else if (this.keys.getOrDefault(KeyCode.DIGIT0, false)){
+			difficulty = 0;
+			FALLING_SPEED = getSpeed();
+			this.fallTime = FALLING_SPEED;
+			this.keys.put(KeyCode.DIGIT0, false);
 		}
 
 		this.world.render(gc);
@@ -207,7 +270,7 @@ public class MainApplication extends Application{
 		gc.setFill(Color.BLACK);
 		gc.setFont(MAIN_FONT);
 		gc.setTextAlign(TextAlignment.CENTER);
-		gc.fillText("Score: "+score+"   Highscore: "+highscore, WIDTH/2, 60);
+		gc.fillText("Score: "+score+"   Highscore: "+highscore+"   Difficulty: "+difficulty, WIDTH/2, 60);
 
 		gc.setStroke(Color.BLACK);
 		gc.setLineWidth(3);
