@@ -11,8 +11,10 @@ import javafx.util.Duration;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
+import javafx.scene.media.*;
 
 import java.util.*;
+import java.io.*;
 
 public class MainApplication extends Application{
 	private static final double WIDTH = 600;
@@ -25,7 +27,10 @@ public class MainApplication extends Application{
 	private volatile int fallTime;
 	private Piece nextPiece = null;
 
-	public static volatile int score;
+	public static volatile int score, highscore;
+	public static Map<String, AudioClip> audio = new HashMap<>();
+	private static Media BACKGROUND_MUSIC;
+	private static Font MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), 22);
 	
 	@Override
 	public void start(Stage stage){
@@ -33,6 +38,12 @@ public class MainApplication extends Application{
 		Canvas canvas = new Canvas(WIDTH, HEIGHT);
 		GraphicsContext gc = canvas.getGraphicsContext2D();
 		pane.getChildren().add(canvas);
+
+		loadHighscore();
+		loadAudio();
+		MediaPlayer mp = new MediaPlayer(BACKGROUND_MUSIC);
+		mp.setCycleCount(MediaPlayer.INDEFINITE);
+		mp.play();
 
 		canvas.setFocusTraversable(true);
 		canvas.setOnKeyPressed(e -> this.keys.put(e.getCode(), true));
@@ -49,11 +60,13 @@ public class MainApplication extends Application{
 					// Create a tetromino
 					if (!this.fallingTetromino.isFalling()){
 						this.world.checkLines();
+						MainApplication.audio.get("block_landed.wav").play();
 						createTetromino();
 					}
 
 					if (this.keys.getOrDefault(KeyCode.DOWN, false)){
 						score += 2;
+						MainApplication.audio.get("move.wav").play();
 					}
 
 					Thread.sleep(this.keys.getOrDefault(KeyCode.DOWN, false) ? 100 : this.fallTime);
@@ -75,12 +88,53 @@ public class MainApplication extends Application{
 		stage.show();
 	}
 
+	private void saveHighscore(){
+		File file = new File("highscore.txt");
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			writer.write(Integer.toString(highscore));
+			writer.close();
+		} catch (IOException ex){
+			ex.printStackTrace();
+		}
+	}
+
+	private void loadHighscore(){
+		File file = new File("highscore.txt");
+		if (file.exists()){
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader(file));
+				highscore = Integer.parseInt(reader.readLine());
+				reader.close();
+			} catch (IOException ex){
+				ex.printStackTrace();
+			}
+		}
+	}
+
+	private static void loadAudio(){
+		try {
+			BACKGROUND_MUSIC = new Media(MainApplication.class.getResource("/audio/background.mp3").toURI().toString());
+			String[] audios = new String[]{"block_landed.wav", "clear.wav", "falling.wav", "gameover.wav", "move.wav", "rotate.wav", "tetris.wav"};
+
+			for (String a : audios){
+				audio.put(a, new AudioClip(MainApplication.class.getResource("/audio/"+a).toURI().toString()));
+			}
+		} catch (Exception ex){
+			ex.printStackTrace();
+		}
+	}
+
 	private void gameOver(){
-		System.out.println("Game over");
+		MainApplication.audio.get("gameover.wav").play();
 		this.world.getTetrominoes().clear();
 		this.fallingTetromino = null;
 		this.fallTime = 400;
 		this.nextPiece = null;
+		if (score > highscore){
+			highscore = score;
+			saveHighscore();
+		}
 		score = 0;
 		createTetromino();
 	}
@@ -117,6 +171,7 @@ public class MainApplication extends Application{
 			this.keys.put(KeyCode.UP, false);
 		} else if (this.keys.getOrDefault(KeyCode.SPACE, false)){
 			this.fallTime = 0;
+			MainApplication.audio.get("falling.wav").play();
 			score += 50;
 			this.keys.put(KeyCode.SPACE, false);
 		}
@@ -124,9 +179,9 @@ public class MainApplication extends Application{
 		this.world.render(gc);
 
 		gc.setFill(Color.BLACK);
-		gc.setFont(new Font("sans-serif", 20));
+		gc.setFont(MAIN_FONT);
 		gc.setTextAlign(TextAlignment.CENTER);
-		gc.fillText("Score: "+score, WIDTH/2, 60);
+		gc.fillText("Score: "+score+"   Highscore: "+highscore, WIDTH/2, 60);
 
 		gc.setStroke(Color.BLACK);
 		gc.setLineWidth(3);

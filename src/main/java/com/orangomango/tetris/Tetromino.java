@@ -116,6 +116,7 @@ public class Tetromino{
 			if (getMinX() < 0 || getMaxX() > this.world.getWidth()-1 || collided()){
 				this.x -= n;
 			}
+			MainApplication.audio.get("move.wav").play();
 		}
 	}
 
@@ -206,6 +207,8 @@ public class Tetromino{
 				this.pieceHeight = backupH;
 				this.pieceShape = backupShape;
 			}
+
+			MainApplication.audio.get("rotate.wav").play();
 		}
 	}
 

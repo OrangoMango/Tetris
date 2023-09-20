@@ -77,15 +77,19 @@ public class World{
 		switch (rowsCleared){
 			case 1:
 				MainApplication.score += 100;
+				MainApplication.audio.get("clear.wav").play();
 				break;
 			case 2:
 				MainApplication.score += 300;
+				MainApplication.audio.get("clear.wav").play();
 				break;
 			case 3:
 				MainApplication.score += 500;
+				MainApplication.audio.get("clear.wav").play();
 				break;
 			case 4:
 				MainApplication.score += 800;
+				MainApplication.audio.get("tetris.wav").play();
 				break;
 		}
 	}
