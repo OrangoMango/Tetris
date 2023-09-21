@@ -14,6 +14,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.media.*;
 import javafx.scene.image.Image;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.control.TextInputDialog;
 
 import java.util.*;
 
@@ -31,6 +33,10 @@ public class MainApplication extends Application{
 	private Map<KeyCode, Boolean> keys = new HashMap<>();
 	private volatile int fallTime;
 	private Piece nextPiece = null;
+	private boolean paused;
+	private Leaderboard leaderboard;
+	private List<Map.Entry<String, Integer>> entries;
+	private UiButton leadButton, submitButton;
 	private volatile boolean softDrop = false;
 
 	public static volatile int score, highscore, difficulty = 5;
@@ -58,6 +64,37 @@ public class MainApplication extends Application{
 
 		this.world = new World((WIDTH-10*Tetromino.SIZE)*0.7, (HEIGHT-20*Tetromino.SIZE)/2, 10, 20);
 		createTetromino();
+
+		this.leadButton = new UiButton(new Image(getClass().getResourceAsStream("/lead.png")), new Rectangle2D(WIDTH*0.1, HEIGHT*0.2, Tetromino.SIZE*3, Tetromino.SIZE*3), () -> {
+			this.paused = !this.paused;
+			this.leaderboard.load();
+			this.entries = this.leaderboard.getEntries();
+		});
+
+		this.submitButton = new UiButton(new Image(getClass().getResourceAsStream("/submit.png")), new Rectangle2D(WIDTH*0.1, HEIGHT*0.8, Tetromino.SIZE*3, Tetromino.SIZE*3), () -> {
+			TextInputDialog dialog = new TextInputDialog();
+			dialog.setHeaderText("Username:");
+			dialog.showAndWait().ifPresent(s -> {
+				if (!s.equals("") && highscore > 0){
+					this.leaderboard.addEntry(s, highscore);
+					this.leaderboard.load();
+					this.entries = this.leaderboard.getEntries();
+				}
+			});
+		});
+
+		canvas.setOnMousePressed(e -> {
+			if (this.paused){
+				boolean ok = this.submitButton.click(e.getX(), e.getY());
+				if (!ok) this.paused = false;
+			} else {
+				this.leadButton.click(e.getX(), e.getY());
+			}
+		});
+
+		this.leaderboard = new Leaderboard("http://127.0.0.1/games/tetris/leaderboard.php");
+		this.leaderboard.load();
+		this.entries = this.leaderboard.getEntries();
 
 		gameLoop(); // Start the game loop
 		
@@ -96,6 +133,8 @@ public class MainApplication extends Application{
 		MAIN_FONT = Font.loadFont(Resource.toUrl("/fonts/font.ttf", MainApplication.class), HEIGHT*0.03);
 		this.world.setX((WIDTH-10*Tetromino.SIZE)*0.5+Tetromino.SIZE*2);
 		this.world.setY((HEIGHT-20*Tetromino.SIZE)/2);
+		this.leadButton.setRect(new Rectangle2D(WIDTH*0.1, HEIGHT*0.2, Tetromino.SIZE*3, Tetromino.SIZE*3));
+		this.submitButton.setRect(new Rectangle2D(WIDTH*0.1, HEIGHT*0.8, Tetromino.SIZE*3, Tetromino.SIZE*3));
 	}
 
 	private Tetromino createTempTetromino(){
@@ -178,25 +217,49 @@ public class MainApplication extends Application{
 		gc.setFill(Color.web("#D5FDEB"));
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 
-		if (this.keys.getOrDefault(KeyCode.RIGHT, false)){
-			this.fallingTetromino.move(1);
-			this.keys.put(KeyCode.RIGHT, false);
-		} else if (this.keys.getOrDefault(KeyCode.LEFT, false)){
-			this.fallingTetromino.move(-1);
-			this.keys.put(KeyCode.LEFT, false);
-		} else if (this.keys.getOrDefault(KeyCode.UP, false)){
-			MainApplication.audio.get("rotate.wav").play();
-			this.fallingTetromino.rotate();
-			this.keys.put(KeyCode.UP, false);
-		} else if (this.keys.getOrDefault(KeyCode.SPACE, false)){
-			if (this.fallingTetromino.isFalling()){
-				MainApplication.audio.get("falling.wav").play();
-				Tetromino shadow = createTempTetromino();
-				score += (shadow.getMinY()-this.fallingTetromino.getMaxY()-1)*10;
-				this.fallingTetromino.stop();
-				this.fallingTetromino.setX(shadow.getX());
-				this.fallingTetromino.setY(shadow.getY());
-				this.keys.put(KeyCode.SPACE, false);
+		if (this.paused){
+			// Show leaderboard
+			if (this.entries != null){
+				gc.setFill(Color.BLACK);
+				gc.setTextAlign(TextAlignment.CENTER);
+				StringBuilder builder = new StringBuilder();
+				int i = 1;
+				for (Map.Entry<String, Integer> entry : this.entries){
+					builder.append((i++)+". "+entry.getKey()+"    "+entry.getValue()+"\n");
+					if (i == 4){
+						builder.append("\n");
+					} else if (i == 11) break;
+				}
+				gc.fillText(builder.toString(), WIDTH/2, HEIGHT*0.15);
+			}
+
+			this.submitButton.render(gc);
+			return;
+		}
+
+		this.leadButton.render(gc);
+
+		if (this.fallingTetromino != null){
+			if (this.keys.getOrDefault(KeyCode.RIGHT, false)){
+				this.fallingTetromino.move(1);
+				this.keys.put(KeyCode.RIGHT, false);
+			} else if (this.keys.getOrDefault(KeyCode.LEFT, false)){
+				this.fallingTetromino.move(-1);
+				this.keys.put(KeyCode.LEFT, false);
+			} else if (this.keys.getOrDefault(KeyCode.UP, false)){
+				MainApplication.audio.get("rotate.wav").play();
+				this.fallingTetromino.rotate();
+				this.keys.put(KeyCode.UP, false);
+			} else if (this.keys.getOrDefault(KeyCode.SPACE, false)){
+				if (this.fallingTetromino.isFalling()){
+					MainApplication.audio.get("falling.wav").play();
+					Tetromino shadow = createTempTetromino();
+					score += (shadow.getMinY()-this.fallingTetromino.getMaxY()-1)*10;
+					this.fallingTetromino.stop();
+					this.fallingTetromino.setX(shadow.getX());
+					this.fallingTetromino.setY(shadow.getY());
+					this.keys.put(KeyCode.SPACE, false);
+				}
 			}
 		}
 
