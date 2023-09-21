@@ -31,6 +31,14 @@ public class World{
 		return this.y;
 	}
 
+	public void setX(double v){
+		this.x = v;
+	}
+
+	public void setY(double v){
+		this.y = v;
+	}
+
 	public int getWidth(){
 		return this.width;
 	}

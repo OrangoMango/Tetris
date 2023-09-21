@@ -6,7 +6,7 @@ import javafx.scene.image.Image;
 import java.util.*;
 
 public class Tetromino{
-	public static final int SIZE = 30;
+	public static int SIZE = 30;
 
 	private World world;
 	private int x, y;
@@ -16,6 +16,7 @@ public class Tetromino{
 	private Piece piece;
 	private Tetromino parent;
 	private int rotation;
+	private boolean empty;
 
 	public Tetromino(World world, int x, int y, Piece piece){
 		this.world = world;
@@ -246,13 +247,28 @@ public class Tetromino{
 		if (this.falling){
 			fall();
 		}
+
+		if (!this.empty){
+			this.empty = isEmpty();
+		}
+	}
+
+	private boolean isEmpty(){
+		for (int x = 0; x < this.pieceWidth; x++){
+			for (int y = 0; y < this.pieceHeight; y++){
+				boolean e = this.pieceShape[x+this.pieceWidth*y];
+				if (e) return false;
+			}
+		}
+
+		return true;
 	}
 
 	public boolean collided(){
 		List<Tetromino> tetrominoes = this.world.getTetrominoes();
 		for (int i = 0; i < tetrominoes.size(); i++){
 			Tetromino t = tetrominoes.get(i);
-			if (t != this && t != this.parent){
+			if (t != this && t != this.parent && !t.empty){
 				for (int x = 0; x < this.pieceWidth; x++){
 					for (int y = 0; y < this.pieceHeight; y++){
 						boolean thisSquare = this.getAbsoluteFromShape(this.x+x, this.y+y);

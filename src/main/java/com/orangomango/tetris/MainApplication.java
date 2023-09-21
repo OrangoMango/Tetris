@@ -12,13 +12,14 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.media.*;
+import javafx.scene.image.Image;
 
 import java.util.*;
 import java.io.*;
 
 public class MainApplication extends Application{
-	private static final double WIDTH = 600;
-	private static final double HEIGHT = 800;
+	private static double WIDTH = 600;
+	private static double HEIGHT = 800;
 	private static final int FPS = 40;
 
 	private World world;
@@ -83,10 +84,24 @@ public class MainApplication extends Application{
 		loop.setCycleCount(Animation.INDEFINITE);
 		loop.play();
 
+		stage.widthProperty().addListener((ob, oldV, newV) -> resize((double)newV, HEIGHT, canvas));
+		stage.heightProperty().addListener((ob, oldV, newV) -> resize(WIDTH, (double)newV, canvas));
+
 		stage.setTitle("Tetris");
-		stage.setResizable(false);
+		stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
 		stage.setScene(new Scene(pane, WIDTH, HEIGHT));
 		stage.show();
+	}
+
+	private void resize(double w, double h, Canvas canvas){
+		WIDTH = w;
+		HEIGHT = h;
+		Tetromino.SIZE = (int)(HEIGHT*0.0375);
+		MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), HEIGHT*0.03);
+		canvas.setWidth(w);
+		canvas.setHeight(h);
+		this.world.setX((WIDTH-10*Tetromino.SIZE)*0.5+Tetromino.SIZE*2);
+		this.world.setY((HEIGHT-20*Tetromino.SIZE)/2);
 	}
 
 	private Tetromino createTempTetromino(){
@@ -260,7 +275,7 @@ public class MainApplication extends Application{
 
 		this.world.render(gc);
 
-		if (this.fallingTetromino.isFalling()){
+		if (this.fallingTetromino != null && this.fallingTetromino.isFalling()){
 			gc.save();
 			gc.translate(this.world.getX(), this.world.getY());
 			createTempTetromino().render(gc);
@@ -270,14 +285,15 @@ public class MainApplication extends Application{
 		gc.setFill(Color.BLACK);
 		gc.setFont(MAIN_FONT);
 		gc.setTextAlign(TextAlignment.CENTER);
-		gc.fillText("Score: "+score+"   Highscore: "+highscore+"   Difficulty: "+difficulty, WIDTH/2, 60);
+		gc.fillText("Score: "+score+"   Highscore: "+highscore+"   Difficulty: "+difficulty, WIDTH/2, HEIGHT*0.1);
 
 		gc.setStroke(Color.BLACK);
 		gc.setLineWidth(3);
 		gc.setFill(Color.BLACK);
-		gc.fillText("NEXT", 30+Tetromino.SIZE*2+10, 480);
-		gc.strokeRect(30, 490, Tetromino.SIZE*4+20, Tetromino.SIZE*4+20);
-		Tetromino.render(gc, this.nextPiece, 40, 500);
+		double xp = this.world.getX()-Tetromino.SIZE*5.5;
+		gc.fillText("NEXT", xp+Tetromino.SIZE*2+10, HEIGHT*0.6);
+		gc.strokeRect(xp, HEIGHT*0.62, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
+		Tetromino.render(gc, this.nextPiece, xp+Tetromino.SIZE*0.4, HEIGHT*0.62+Tetromino.SIZE*0.4);
 	}
 	
 	public static void main(String[] args){
