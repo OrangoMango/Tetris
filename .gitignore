@@ -14,7 +14,8 @@ gradle-app.setting
 # Cache of project
 .gradletasknamecache
 
-# Aseprite
+# Aseprite & WebFX
 *.aseprite
+target/
 
 highscore.txt
