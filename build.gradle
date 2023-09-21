@@ -11,6 +11,10 @@ repositories {
 	mavenCentral()
 }
 
+dependencies {
+    implementation "org.json:json:20220924"
+}
+
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
