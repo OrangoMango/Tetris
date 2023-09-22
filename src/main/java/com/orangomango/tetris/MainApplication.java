@@ -245,6 +245,7 @@ public class MainApplication extends Application{
 				gc.setFill(Color.BLACK);
 				gc.setTextAlign(TextAlignment.CENTER);
 				StringBuilder builder = new StringBuilder();
+				builder.append("Click to exit\n\n");
 				int i = 1;
 				for (Map.Entry<String, Integer> entry : this.entries){
 					builder.append((i++)+". "+entry.getKey()+"    "+entry.getValue()+"\n");
