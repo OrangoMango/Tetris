@@ -13,6 +13,7 @@ module Tetris.application.openjfx {
     requires webfx.platform.fetch.java;
     requires webfx.platform.file.java;
     requires webfx.platform.json.java;
+    requires webfx.platform.os.java;
     requires webfx.platform.resource.java;
     requires webfx.platform.scheduler.java;
     requires webfx.platform.shutdown.java;

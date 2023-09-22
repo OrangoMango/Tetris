@@ -11,6 +11,7 @@ module Tetris.application {
     requires webfx.extras.webtext;
     requires webfx.platform.fetch;
     requires webfx.platform.json;
+    requires webfx.platform.os;
     requires webfx.platform.resource;
     requires webfx.platform.scheduler;
     requires webfx.platform.storage;

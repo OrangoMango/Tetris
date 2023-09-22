@@ -31,6 +31,7 @@ import dev.webfx.stack.ui.controls.dialog.DialogCallback;
 import dev.webfx.platform.resource.Resource;
 import dev.webfx.platform.scheduler.Scheduler;
 import dev.webfx.platform.storage.LocalStorage;
+import dev.webfx.platform.os.OperatingSystem;
 
 public class MainApplication extends Application{
 	private static double WIDTH = Screen.getPrimary().getVisualBounds().getWidth();
@@ -96,6 +97,19 @@ public class MainApplication extends Application{
 				this.leadButton.click(e.getX(), e.getY());
 			}
 		});
+
+		if (OperatingSystem.isMobile()){
+			canvas.setOnMouseReleased(e -> {
+				this.keys.put(KeyCode.LEFT, false);
+				this.keys.put(KeyCode.RIGHT, false);
+				//this.keys.put(KeyCode.DOWN, false);
+				this.keys.put(KeyCode.SPACE, false);
+			});
+
+			canvas.setOnSwipeLeft(e -> this.keys.put(KeyCode.LEFT, true));
+			canvas.setOnSwipeRight(e -> this.keys.put(KeyCode.RIGHT, true));
+			canvas.setOnSwipeDown(e -> this.keys.put(KeyCode.SPACE, true));
+		}
 
 		this.leaderboard = new Leaderboard("https://mangogamesid.000webhostapp.com/games/tetris/leaderboard.php");
 		this.leaderboard.load(() -> this.entries = this.leaderboard.getEntries());
