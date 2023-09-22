@@ -97,7 +97,7 @@ public class MainApplication extends Application{
 			}
 		});
 
-		this.leaderboard = new Leaderboard("http://127.0.0.1/games/tetris/leaderboard.php");
+		this.leaderboard = new Leaderboard("https://mangogamesid.000webhostapp.com/games/tetris/leaderboard.php");
 		this.leaderboard.load(() -> this.entries = this.leaderboard.getEntries());
 
 		gameLoop(); // Start the game loop
