@@ -5,6 +5,9 @@ import javafx.stage.Stage;
 import javafx.stage.Screen;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.canvas.*;
 import javafx.scene.paint.Color;
 import javafx.animation.*;
@@ -14,11 +17,17 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.media.*;
 import javafx.scene.image.Image;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.TextInputDialog;
+import javafx.geometry.Insets;
 
 import java.util.*;
+import java.util.function.Consumer;
 
+import dev.webfx.extras.webtext.HtmlText;
+import dev.webfx.stack.ui.controls.dialog.DialogUtil;
+import dev.webfx.stack.ui.controls.dialog.DialogCallback;
 import dev.webfx.platform.resource.Resource;
 import dev.webfx.platform.scheduler.Scheduler;
 import dev.webfx.platform.storage.LocalStorage;
@@ -50,7 +59,8 @@ public class MainApplication extends Application{
 		StackPane pane = new StackPane();
 		Canvas canvas = new Canvas(WIDTH, HEIGHT);
 		GraphicsContext gc = canvas.getGraphicsContext2D();
-		pane.getChildren().add(new CanvasPane(canvas, (w, h) -> resize(w, h)));
+		CanvasPane canvasPane = new CanvasPane(canvas, (w, h) -> resize(w, h));
+		pane.getChildren().add(canvasPane);
 
 		loadHighscore();
 		loadAudio();
@@ -65,20 +75,15 @@ public class MainApplication extends Application{
 		this.world = new World((WIDTH-10*Tetromino.SIZE)*0.7, (HEIGHT-20*Tetromino.SIZE)/2, 10, 20);
 		createTetromino();
 
-		this.leadButton = new UiButton(new Image(getClass().getResourceAsStream("/lead.png")), new Rectangle2D(WIDTH*0.1, HEIGHT*0.2, Tetromino.SIZE*3, Tetromino.SIZE*3), () -> {
+		this.leadButton = new UiButton(new Image(Resource.toUrl("/images/lead.png", getClass())), new Rectangle2D(WIDTH*0.1, HEIGHT*0.2, Tetromino.SIZE*3, Tetromino.SIZE*3), () -> {
 			this.paused = !this.paused;
-			this.leaderboard.load();
-			this.entries = this.leaderboard.getEntries();
+			this.leaderboard.load(() -> this.entries = this.leaderboard.getEntries());
 		});
 
-		this.submitButton = new UiButton(new Image(getClass().getResourceAsStream("/submit.png")), new Rectangle2D(WIDTH*0.1, HEIGHT*0.8, Tetromino.SIZE*3, Tetromino.SIZE*3), () -> {
-			TextInputDialog dialog = new TextInputDialog();
-			dialog.setHeaderText("Username:");
-			dialog.showAndWait().ifPresent(s -> {
+		this.submitButton = new UiButton(new Image(Resource.toUrl("/images/submit.png", getClass())), new Rectangle2D(WIDTH*0.1, HEIGHT*0.8, Tetromino.SIZE*3, Tetromino.SIZE*3), () -> {
+			createTextAlert("Username:", canvasPane, s -> {
 				if (!s.equals("") && highscore > 0){
-					this.leaderboard.addEntry(s, highscore);
-					this.leaderboard.load();
-					this.entries = this.leaderboard.getEntries();
+					this.leaderboard.addEntry(s, highscore, () -> this.leaderboard.load(() -> this.entries = this.leaderboard.getEntries()));
 				}
 			});
 		});
@@ -93,8 +98,7 @@ public class MainApplication extends Application{
 		});
 
 		this.leaderboard = new Leaderboard("http://127.0.0.1/games/tetris/leaderboard.php");
-		this.leaderboard.load();
-		this.entries = this.leaderboard.getEntries();
+		this.leaderboard.load(() -> this.entries = this.leaderboard.getEntries());
 
 		gameLoop(); // Start the game loop
 		
@@ -107,6 +111,31 @@ public class MainApplication extends Application{
 		stage.setScene(new Scene(pane, WIDTH, HEIGHT));
 		stage.show();
 	}
+
+	private void createTextAlert(String headerText, CanvasPane pane, Consumer<String> onSuccess){
+        GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(5, 5, 5, 5));
+        gridPane.setHgap(5);
+        gridPane.setVgap(5);
+        gridPane.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+        HtmlText header = new HtmlText("<b>"+headerText+"</b>");
+        TextField field = new TextField();
+        Button ok = new Button("OK");
+        ok.setDefaultButton(true);
+        Button cancel = new Button("CANCEL");
+        cancel.setCancelButton(true);
+        gridPane.add(header, 0, 0, 2, 1);
+        gridPane.add(field, 0, 1, 2, 1);
+        gridPane.add(cancel, 0, 2);
+        gridPane.add(ok, 1, 2);
+        DialogCallback callback = DialogUtil.showModalNodeInGoldLayout(gridPane, pane);
+        field.requestFocus();
+        ok.setOnAction(e -> {
+        	callback.closeDialog();
+        	onSuccess.accept(field.getText());
+        });
+        cancel.setOnAction(e -> callback.closeDialog());
+    }
 
 	private void gameLoop(){
 		this.world.update();
