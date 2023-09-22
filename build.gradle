@@ -20,7 +20,7 @@ targetCompatibility = '17'
 
 application {
 	mainModule = 'com.orangomango.tetris'
-	mainClass = 'com.orangomango.tetris.MainApplication'
+	mainClass = 'com.orangomango.tetris.Launcher'
 }
 
 javafx {

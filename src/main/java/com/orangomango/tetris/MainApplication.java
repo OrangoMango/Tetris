@@ -254,6 +254,10 @@ public class MainApplication extends Application{
 					} else if (i == 11) break;
 				}
 				gc.fillText(builder.toString(), WIDTH/2, HEIGHT*0.15);
+			} else {
+				gc.setFill(Color.BLACK);
+				gc.setTextAlign(TextAlignment.CENTER);
+				gc.fillText("Loading...\n\nClick to exit", WIDTH/2, HEIGHT*0.15);
 			}
 
 			this.submitButton.render(gc);

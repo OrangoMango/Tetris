@@ -21,6 +21,8 @@ public class Leaderboard{
 			reader.lines().skip(5).forEach(builder::append);
 			reader.close();
 			this.json = new JSONObject(builder.toString());
+		} catch (UnknownHostException ex){
+			System.out.println("No internet");
 		} catch (IOException ex){
 			ex.printStackTrace();
 		}
@@ -30,6 +32,8 @@ public class Leaderboard{
 		try {
 			URL url = new URL(this.location+"?mode=save"+String.format("&user=%s&value=%d", user, value));
 			url.openStream();
+		} catch (UnknownHostException ex){
+			System.out.println("No internet");
 		} catch (IOException ex){
 			ex.printStackTrace();
 		}
