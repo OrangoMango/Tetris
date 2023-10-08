@@ -28,8 +28,8 @@ public class MainApplication extends Application{
 	private Tetromino fallingTetromino;
 	private Map<KeyCode, Boolean> keys = new HashMap<>();
 	private volatile int fallTime;
-	private Piece nextPiece = null;
-	private boolean paused;
+	private Piece nextPiece = null, holdPiece;
+	private boolean paused, holdDone;
 	private Leaderboard leaderboard;
 	private List<Map.Entry<String, Integer>> entries;
 	private UiButton leadButton, submitButton;
@@ -58,7 +58,7 @@ public class MainApplication extends Application{
 		canvas.setOnKeyReleased(e -> this.keys.put(e.getCode(), false));
 
 		this.world = new World((WIDTH-10*Tetromino.SIZE)*0.7, (HEIGHT-20*Tetromino.SIZE)/2, 10, 20);
-		createTetromino();
+		createTetromino(null);
 
 		this.leadButton = new UiButton(new Image(getClass().getResourceAsStream("/lead.png")), new Rectangle2D(WIDTH*0.1, HEIGHT*0.2, Tetromino.SIZE*3, Tetromino.SIZE*3), () -> {
 			this.paused = !this.paused;
@@ -101,7 +101,8 @@ public class MainApplication extends Application{
 						if (!this.fallingTetromino.isFalling()){
 							this.world.checkLines();
 							MainApplication.audio.get("block_landed.wav").play();
-							createTetromino();
+							createTetromino(null);
+							this.holdDone = false;
 						}
 
 						if (this.keys.getOrDefault(KeyCode.DOWN, false)){
@@ -160,6 +161,21 @@ public class MainApplication extends Application{
 		return temp;
 	}
 
+	private void holdPiece(){
+		if (this.holdDone) return;
+		if (this.holdPiece != null){
+			this.world.getTetrominoes().remove(this.fallingTetromino);
+			Piece p = this.holdPiece;
+			this.holdPiece = this.fallingTetromino.getPiece();
+			createTetromino(p);
+			this.holdDone = true;
+		} else {
+			this.holdPiece = this.fallingTetromino.getPiece();
+			this.world.getTetrominoes().remove(this.fallingTetromino);
+			createTetromino(null);
+		}
+	}
+
 	private void saveHighscore(){
 		File file = new File("highscore.txt");
 		try {
@@ -208,13 +224,18 @@ public class MainApplication extends Application{
 			saveHighscore();
 		}
 		score = 0;
-		createTetromino();
+		createTetromino(null);
 	}
 
-	private void createTetromino(){
+	private void createTetromino(Piece defPiece){
 		Random random = new Random();
 		Piece p = this.nextPiece == null ? Piece.values()[random.nextInt(Piece.values().length)] : this.nextPiece;
-		this.nextPiece = Piece.values()[random.nextInt(Piece.values().length)];
+		if (defPiece != null){
+			p = defPiece;
+		} else {
+			this.nextPiece = Piece.values()[random.nextInt(Piece.values().length)];
+		}
+
 		Tetromino t = new Tetromino(this.world, this.world.getWidth()/2-p.getWidth()/2, 0, p);
 
 		if (t.collided()){
@@ -223,7 +244,7 @@ public class MainApplication extends Application{
 		}
 
 		this.fallingTetromino = t;
-		this.world.addTetromino(t);
+		this.world.getTetrominoes().add(t);
 		this.fallTime = FALLING_SPEED;
 	}
 
@@ -287,6 +308,9 @@ public class MainApplication extends Application{
 					this.fallingTetromino.setY(shadow.getY());
 					this.keys.put(KeyCode.SPACE, false);
 				}
+			} else if (this.keys.getOrDefault(KeyCode.H, false)){
+				holdPiece();
+				this.keys.put(KeyCode.H, false);
 			}
 		}
 
@@ -361,9 +385,14 @@ public class MainApplication extends Application{
 		gc.setLineWidth(3);
 		gc.setFill(Color.BLACK);
 		double xp = this.world.getX()-Tetromino.SIZE*5.5;
-		gc.fillText("NEXT", xp+Tetromino.SIZE*2+10, HEIGHT*0.6);
-		gc.strokeRect(xp, HEIGHT*0.62, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
-		Tetromino.render(gc, this.nextPiece, xp+Tetromino.SIZE*0.4, HEIGHT*0.62+Tetromino.SIZE*0.4);
+		gc.fillText("NEXT", xp+Tetromino.SIZE*2+10, HEIGHT*0.65);
+		gc.strokeRect(xp, HEIGHT*0.67, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
+		Tetromino.render(gc, this.nextPiece, xp+Tetromino.SIZE*0.4, HEIGHT*0.67+Tetromino.SIZE*0.4);
+
+		// Hold
+		gc.fillText("HOLD", xp+Tetromino.SIZE*2+10, HEIGHT*0.4);
+		gc.strokeRect(xp, HEIGHT*0.42, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
+		if (this.holdPiece != null) Tetromino.render(gc, this.holdPiece, xp+Tetromino.SIZE*0.4, HEIGHT*0.42+Tetromino.SIZE*0.4);
 	}
 	
 	public static void main(String[] args){
