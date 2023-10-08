@@ -250,6 +250,8 @@ public class Tetromino{
 
 		if (!this.empty){
 			this.empty = isEmpty();
+		} else {
+			this.world.getTetrominoes().remove(this);
 		}
 	}
 

@@ -12,7 +12,6 @@ public class World{
 	private double x, y;
 	private int width, height;
 	private List<Tetromino> tetrominoes = new ArrayList<>();
-	private Image background = new Image(Resource.toUrl("/images/block8.png", getClass()));
 
 	public World(double x, double y, int w, int h){
 		this.x = x;
@@ -47,10 +46,6 @@ public class World{
 
 	public int getHeight(){
 		return this.height;
-	}
-
-	public void addTetromino(Tetromino t){
-		this.tetrominoes.add(t);
 	}
 
 	private boolean pointExists(int x, int y){
@@ -122,13 +117,6 @@ public class World{
 	public void render(GraphicsContext gc){
 		gc.save();
 		gc.translate(this.x, this.y);
-
-		// Background
-		for (int x = 0; x < this.width; x++){
-			for (int y = 0; y < this.height; y++){
-				gc.drawImage(this.background, x*Tetromino.SIZE, y*Tetromino.SIZE, Tetromino.SIZE, Tetromino.SIZE);
-			}
-		}
 
 		for (int i = 0; i < this.tetrominoes.size(); i++){
 			Tetromino t = this.tetrominoes.get(i);
