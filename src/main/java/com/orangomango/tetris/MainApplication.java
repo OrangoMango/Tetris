@@ -34,7 +34,7 @@ public class MainApplication extends Application{
 	private List<Map.Entry<String, Integer>> entries;
 	private UiButton leadButton, submitButton;
 
-	public static volatile int score, highscore, difficulty = 5;
+	public static volatile int score, lastScore, highscore, difficulty = 5;
 	public static Map<String, AudioClip> audio = new HashMap<>();
 	private static Media BACKGROUND_MUSIC;
 	private static Font MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), 25);
@@ -108,6 +108,11 @@ public class MainApplication extends Application{
 						if (this.keys.getOrDefault(KeyCode.DOWN, false)){
 							score += 2;
 							MainApplication.audio.get("move.wav").play();
+						}
+
+						if (score > lastScore+5000){ // Every 7000 score the game gets more difficult
+							lastScore = score;
+							difficulty = Math.min(difficulty+1, 9);
 						}
 					}
 
