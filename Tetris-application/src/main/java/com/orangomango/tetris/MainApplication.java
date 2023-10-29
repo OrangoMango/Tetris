@@ -49,7 +49,7 @@ public class MainApplication extends Application{
 	private UiButton leadButton, submitButton;
 	private volatile boolean softDrop = false;
 
-	public static volatile int score, highscore, difficulty = 5;
+	public static volatile int score, lastScore, highscore, difficulty = 5;
 	public static Map<String, AudioClip> audio = new HashMap<>();
 	private static Media BACKGROUND_MUSIC;
 	private static Font MAIN_FONT = Font.loadFont(Resource.toUrl("/fonts/font.ttf", MainApplication.class), 25);
@@ -99,12 +99,12 @@ public class MainApplication extends Application{
 		});
 
 		if (OperatingSystem.isMobile()){
-			canvas.setOnMouseReleased(e -> {
+			/*canvas.setOnMouseReleased(e -> {
 				this.keys.put(KeyCode.LEFT, false);
 				this.keys.put(KeyCode.RIGHT, false);
 				//this.keys.put(KeyCode.DOWN, false);
 				this.keys.put(KeyCode.SPACE, false);
-			});
+			});*/
 
 			canvas.setOnSwipeLeft(e -> this.keys.put(KeyCode.LEFT, true));
 			canvas.setOnSwipeRight(e -> this.keys.put(KeyCode.RIGHT, true));
@@ -165,6 +165,11 @@ public class MainApplication extends Application{
 		if (this.softDrop){
 			score += 2;
 			MainApplication.audio.get("move.wav").play();
+		}
+
+		if (score > lastScore+5000){ // Every 7000 score the game gets more difficult
+			lastScore = score;
+			difficulty = Math.min(difficulty+1, 9);
 		}
 
 		Scheduler.scheduleDelay(this.softDrop ? this.fallTime/4 : this.fallTime, this::gameLoop);
