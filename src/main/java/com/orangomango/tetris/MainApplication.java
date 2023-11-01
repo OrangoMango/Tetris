@@ -33,6 +33,9 @@ public class MainApplication extends Application{
 	private Leaderboard leaderboard;
 	private List<Map.Entry<String, Integer>> entries;
 	private UiButton leadButton, submitButton;
+	private Rectangle2D holdRect;
+	private double lastDragPoint;
+	private boolean dragging = false;
 
 	public static volatile int score, lastScore, highscore, difficulty = 5;
 	public static Map<String, AudioClip> audio = new HashMap<>();
@@ -78,12 +81,34 @@ public class MainApplication extends Application{
 			});
 		});
 
-		canvas.setOnMousePressed(e -> {
+		canvas.setOnMouseReleased(e -> {
 			if (this.paused){
 				boolean ok = this.submitButton.click(e.getX(), e.getY());
 				if (!ok) this.paused = false;
 			} else {
-				this.leadButton.click(e.getX(), e.getY());
+				boolean ok = this.leadButton.click(e.getX(), e.getY());
+				if (!ok){
+					if (this.holdRect.contains(e.getX(), e.getY())){
+						this.keys.put(KeyCode.H, true);
+					} else if (!this.dragging){
+						this.keys.put(KeyCode.UP, true);
+					}
+				}
+			}
+			this.dragging = false;
+		});
+
+		canvas.setOnMouseDragged(e -> {
+			if (!this.paused){
+				if (Math.abs(this.lastDragPoint-e.getX()) > 20){
+					if (e.getX() > lastDragPoint){
+						this.keys.put(KeyCode.RIGHT, true);
+					} else {
+						this.keys.put(KeyCode.LEFT, true);
+					}
+					this.lastDragPoint = e.getX();
+					this.dragging = true;
+				}
 			}
 		});
 
@@ -110,7 +135,7 @@ public class MainApplication extends Application{
 							MainApplication.audio.get("move.wav").play();
 						}
 
-						if (score > lastScore+5000){ // Every 7000 score the game gets more difficult
+						if (score > lastScore+5000){ // Every 5000 score the game gets more difficult
 							lastScore = score;
 							difficulty = Math.min(difficulty+1, 9);
 						}
@@ -141,8 +166,8 @@ public class MainApplication extends Application{
 	private void resize(double w, double h, Canvas canvas){
 		WIDTH = w;
 		HEIGHT = h;
-		Tetromino.SIZE = (int)(HEIGHT*0.0375);
-		MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), HEIGHT*0.03);
+		Tetromino.SIZE = (int)Math.min(WIDTH*0.05, HEIGHT*0.0375);
+		MAIN_FONT = Font.loadFont(MainApplication.class.getResourceAsStream("/font.ttf"), Math.min(WIDTH*0.04, HEIGHT*0.03));
 		canvas.setWidth(w);
 		canvas.setHeight(h);
 		this.world.setX((WIDTH-10*Tetromino.SIZE)*0.5+Tetromino.SIZE*2);
@@ -396,7 +421,8 @@ public class MainApplication extends Application{
 
 		// Hold
 		gc.fillText("HOLD", xp+Tetromino.SIZE*2+10, HEIGHT*0.4);
-		gc.strokeRect(xp, HEIGHT*0.42, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
+		this.holdRect = new Rectangle2D(xp, HEIGHT*0.42, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
+		gc.strokeRect(this.holdRect.getMinX(), this.holdRect.getMinY(), this.holdRect.getWidth(), this.holdRect.getHeight());
 		if (this.holdPiece != null) Tetromino.render(gc, this.holdPiece, xp+Tetromino.SIZE*0.4, HEIGHT*0.42+Tetromino.SIZE*0.4);
 	}
 	
