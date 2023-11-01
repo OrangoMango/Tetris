@@ -47,6 +47,9 @@ public class MainApplication extends Application{
 	private Leaderboard leaderboard;
 	private List<Map.Entry<String, Integer>> entries;
 	private UiButton leadButton, submitButton;
+	private Rectangle2D holdRect;
+	private double lastDragPoint;
+	private boolean dragging = false;
 	private volatile boolean softDrop = false;
 
 	public static volatile int score, lastScore, highscore, difficulty = 5;
@@ -89,25 +92,42 @@ public class MainApplication extends Application{
 			});
 		});
 
-		canvas.setOnMousePressed(e -> {
+		canvas.setOnMouseReleased(e -> {
 			if (this.paused){
 				boolean ok = this.submitButton.click(e.getX(), e.getY());
 				if (!ok) this.paused = false;
 			} else {
-				this.leadButton.click(e.getX(), e.getY());
+				boolean ok = this.leadButton.click(e.getX(), e.getY());
+				if (!ok){
+					Rectangle2D wld = new Rectangle2D(this.world.getX(), this.world.getY(), this.world.getWidth()*Tetromino.SIZE, this.world.getHeight()*Tetromino.SIZE);
+					if (this.holdRect.contains(e.getX(), e.getY())){
+						this.keys.put(KeyCode.H, true);
+					} else if (!this.dragging && wld.contains(e.getX(), e.getY())){
+						this.keys.put(KeyCode.UP, true);
+					}
+				}
+			}
+			this.dragging = false;
+		});
+
+		canvas.setOnMouseDragged(e -> {
+			if (!this.paused){
+				if (Math.abs(this.lastDragPoint-e.getX()) > 20){
+					Rectangle2D wld = new Rectangle2D(this.world.getX(), this.world.getY(), this.world.getWidth()*Tetromino.SIZE, this.world.getHeight()*Tetromino.SIZE);
+					if (wld.contains(e.getX(), e.getY())){
+						if (e.getX() > lastDragPoint){
+							this.keys.put(KeyCode.RIGHT, true);
+						} else {
+							this.keys.put(KeyCode.LEFT, true);
+						}
+						this.lastDragPoint = e.getX();
+						this.dragging = true;
+					}
+				}
 			}
 		});
 
 		if (OperatingSystem.isMobile()){
-			/*canvas.setOnMouseReleased(e -> {
-				this.keys.put(KeyCode.LEFT, false);
-				this.keys.put(KeyCode.RIGHT, false);
-				//this.keys.put(KeyCode.DOWN, false);
-				this.keys.put(KeyCode.SPACE, false);
-			});*/
-
-			canvas.setOnSwipeLeft(e -> this.keys.put(KeyCode.LEFT, true));
-			canvas.setOnSwipeRight(e -> this.keys.put(KeyCode.RIGHT, true));
 			canvas.setOnSwipeDown(e -> this.keys.put(KeyCode.SPACE, true));
 		}
 
@@ -167,7 +187,7 @@ public class MainApplication extends Application{
 			MainApplication.audio.get("move.wav").play();
 		}
 
-		if (score > lastScore+5000){ // Every 7000 score the game gets more difficult
+		if (score > lastScore+5000){ // Every 5000 score the game gets more difficult
 			lastScore = score;
 			difficulty = Math.min(difficulty+1, 9);
 		}
@@ -178,8 +198,8 @@ public class MainApplication extends Application{
 	private void resize(double w, double h){
 		WIDTH = w;
 		HEIGHT = h;
-		Tetromino.SIZE = (int)(HEIGHT*0.0375);
-		MAIN_FONT = Font.loadFont(Resource.toUrl("/fonts/font.ttf", MainApplication.class), HEIGHT*0.03);
+		Tetromino.SIZE = (int)Math.min(WIDTH*0.05, HEIGHT*0.0375);
+		MAIN_FONT = Font.loadFont(Resource.toUrl("/fonts/font.ttf", MainApplication.class), Math.min(WIDTH*0.04, HEIGHT*0.03));
 		this.world.setX((WIDTH-10*Tetromino.SIZE)*0.5+Tetromino.SIZE*2);
 		this.world.setY((HEIGHT-20*Tetromino.SIZE)/2);
 		this.leadButton.setRect(new Rectangle2D(WIDTH*0.1, HEIGHT*0.2, Tetromino.SIZE*3, Tetromino.SIZE*3));
@@ -418,7 +438,8 @@ public class MainApplication extends Application{
 
 		// Hold
 		gc.fillText("HOLD", xp+Tetromino.SIZE*2+10, HEIGHT*0.4);
-		gc.strokeRect(xp, HEIGHT*0.42, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
+		this.holdRect = new Rectangle2D(xp, HEIGHT*0.42, Tetromino.SIZE*4.8, Tetromino.SIZE*4.8);
+		gc.strokeRect(this.holdRect.getMinX(), this.holdRect.getMinY(), this.holdRect.getWidth(), this.holdRect.getHeight());
 		if (this.holdPiece != null) Tetromino.render(gc, this.holdPiece, xp+Tetromino.SIZE*0.4, HEIGHT*0.42+Tetromino.SIZE*0.4);
 	}
 	

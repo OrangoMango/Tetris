@@ -211,7 +211,7 @@ public class Tetromino{
 				this.x = this.world.getWidth()-w;
 			}
 			if (this.x < 0) this.x = 0;
-			if (this.y+h >this.world.getHeight()){
+			if (this.y+h > this.world.getHeight()){
 				this.y = this.world.getHeight()-h;
 			}
 
